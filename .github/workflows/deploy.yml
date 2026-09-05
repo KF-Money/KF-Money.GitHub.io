@@ -1,0 +1,78 @@
+name: Build and deploy personal blog
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+      - name: Build static website
+        run: python3 build.py
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Disable Jekyll processing
+        run: touch site/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Read Pages deployment configuration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{html_url,build_type,source,https_enforced}'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify public website over HTTPS
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time
+          from urllib.request import Request, urlopen
+          base = os.environ['SITE_URL'].rstrip('/') + '/'
+          if not base.startswith('https://'):
+              raise SystemExit('Expected an HTTPS Pages URL')
+          for attempt in range(12):
+              try:
+                  stamp = str(time.time_ns())
+                  with urlopen(Request(base + '?verify=' + stamp, headers={'Cache-Control':'no-cache'}), timeout=20) as r:
+                      html = r.read().decode('utf-8')
+                      assert r.status == 200 and 'hero-copy' in html and 'search-modal' in html
+                  with urlopen(Request(base + 'build-info.json?verify=' + stamp, headers={'Cache-Control':'no-cache'}), timeout=20) as r:
+                      info = json.load(r)
+                      assert info['pages'] >= 12 and info['tools'] == 6
+                  print('LIVE VERIFIED:', base)
+                  print(json.dumps(info, ensure_ascii=False))
+                  break
+              except Exception as error:
+                  print(f'Public verification attempt {attempt + 1}: {error}')
+                  if attempt == 11:
+                      raise SystemExit('Pages deployment returned success, but public verification has not passed')
+                  time.sleep(10)
+          PY
