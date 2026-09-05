@@ -1,0 +1,23 @@
+{
+  "name": "知行手记",
+  "tagline": "AI 工具 · 科研实践 · 技术分享",
+  "author": "KF-Money",
+  "domain": "https://kf-money.github.io",
+  "hero_title": "把探索写成记录，",
+  "hero_accent": "让知识持续生长。",
+  "description": "记录 AI 工具、代码开发与科研实践。把一个个问题的解决过程，整理成可回看、可复用、可分享的知识。",
+  "email": "",
+  "wechat": "",
+  "github": "https://github.com/KF-Money",
+  "icp": "",
+  "police_record": "",
+  "police_url": "",
+  "demo": true,
+  "about": "你好，欢迎来到我的个人知识空间。这里关注 AI 工具、科研实践、代码开发和写作思考。希望把每一次探索中的问题、方法和边界都记录下来，让经验可以被回看，也能够被复用。",
+  "categories": [
+    {"id":"ai","name":"AI 工具","icon":"sparkles","description":"把智能工具用进实际工作，从问题出发，而不是从工具出发。","color":"blue"},
+    {"id":"research","name":"科研实践","icon":"flask","description":"记录实验、复现与分析，让每一个结论都有来处。","color":"green"},
+    {"id":"code","name":"代码开发","icon":"code","description":"从一个小脚本到完整项目，沉淀清晰、可维护的实现。","color":"purple"},
+    {"id":"thoughts","name":"写作思考","icon":"pen","description":"在记录中整理思路，在复盘中找到下一步。","color":"orange"}
+  ]
+}
